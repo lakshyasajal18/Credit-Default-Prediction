@@ -20,8 +20,9 @@ import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 from sklearn.calibration import calibration_curve
-from sklearn.ensemble import HistGradientBoostingClassifier
-from sklearn.linear_model import LogisticRegressionCV
+from sklearn.decomposition import PCA
+from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
+from sklearn.linear_model import LogisticRegression, LogisticRegressionCV
 from sklearn.metrics import (average_precision_score, brier_score_loss,
                              confusion_matrix, roc_auc_score, roc_curve)
 from sklearn.model_selection import StratifiedKFold, GridSearchCV, train_test_split
@@ -124,12 +125,42 @@ def main(data, out):
     gb.fit(Xtr, ytr)
     p_gb = gb.predict_proba(Xte)[:, 1]
     results["gb_best_params"] = gb.best_params_
+    # 4) Random forest, small grid searched with 5 fold CV on the training set.
+    rf = GridSearchCV(
+        RandomForestClassifier(n_estimators=300, random_state=SEED, n_jobs=-1),
+        {"max_depth": [6, 10, None], "min_samples_leaf": [5, 20, 50],
+         "max_features": ["sqrt", 0.5]},
+        scoring="roc_auc", cv=cv, n_jobs=1)
+    rf.fit(Xtr, ytr)
+    p_rf = rf.predict_proba(Xte)[:, 1]
+    results["rf_best_params"] = {k: (v if v is None or isinstance(v, str) else float(v))
+                                 for k, v in rf.best_params_.items()}
+
+    # 5) Principal component regression: standardize, PCA, logistic regression.
+    #    Number of components chosen by 5 fold CV on the training set.
+    n_feat = Xtr.shape[1]
+    pcr = GridSearchCV(
+        Pipeline([("scale", StandardScaler()), ("pca", PCA(random_state=SEED)),
+                  ("clf", LogisticRegression(max_iter=2000))]),
+        {"pca__n_components": [3, 5, 8, 10, 12, 15, 20, n_feat]},
+        scoring="roc_auc", cv=cv, n_jobs=-1)
+    pcr.fit(Xtr, ytr)
+    p_pcr = pcr.predict_proba(Xte)[:, 1]
+    best_k = int(pcr.best_params_["pca__n_components"])
+    results["pcr_n_components"] = best_k
+    results["pcr_explained_variance_at_k"] = float(
+        pcr.best_estimator_.named_steps["pca"].explained_variance_ratio_[:best_k].sum())
+    results["pcr_cv_auc_by_k"] = {int(k): float(s) for k, s in zip(
+        pcr.cv_results_["param_pca__n_components"], pcr.cv_results_["mean_test_score"])}
+
     results["cv_auc_train"] = {"gradient_boosting": float(gb.best_score_),
+                               "random_forest": float(rf.best_score_),
+                               "pcr": float(pcr.best_score_),
                                "lasso": float(lasso.named_steps["clf"].scores_[1].mean(axis=0).max())}
 
     # Held out test evaluation.
     models = {"logistic_statsmodels": np.asarray(p_logit), "lasso_logistic": p_lasso,
-              "gradient_boosting": p_gb}
+              "pcr_logistic": p_pcr, "random_forest": p_rf, "gradient_boosting": p_gb}
     base_rate = float(ytr.mean())
     results["test"] = {}
     for name, p in models.items():
