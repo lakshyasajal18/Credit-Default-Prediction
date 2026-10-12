@@ -1,0 +1,104 @@
+{
+  "n_rows": 30000,
+  "n_features": 27,
+  "default_rate": 0.2212,
+  "features": [
+    "LIMIT_BAL",
+    "AGE",
+    "PAY_1",
+    "PAY_2",
+    "PAY_3",
+    "PAY_4",
+    "PAY_5",
+    "PAY_6",
+    "BILL_AMT1",
+    "BILL_AMT2",
+    "BILL_AMT3",
+    "BILL_AMT4",
+    "BILL_AMT5",
+    "BILL_AMT6",
+    "PAY_AMT1",
+    "PAY_AMT2",
+    "PAY_AMT3",
+    "PAY_AMT4",
+    "PAY_AMT5",
+    "PAY_AMT6",
+    "EDUCATION_2",
+    "EDUCATION_3",
+    "EDUCATION_4",
+    "max_delay",
+    "months_delayed",
+    "avg_utilization",
+    "avg_payment_ratio"
+  ],
+  "n_train": 24000,
+  "n_test": 6000,
+  "lasso_nonzero_features": 27,
+  "lasso_chosen_C": 10000.0,
+  "gb_best_params": {
+    "l2_regularization": 1.0,
+    "learning_rate": 0.1,
+    "max_depth": 5,
+    "max_leaf_nodes": 15
+  },
+  "cv_auc_train": {
+    "gradient_boosting": 0.7855153234547108,
+    "lasso": 0.7572955155386831
+  },
+  "test": {
+    "logistic_statsmodels": {
+      "roc_auc": 0.7420760059028514,
+      "pr_auc": 0.5008667760536879,
+      "brier": 0.1427761918936083,
+      "roc_auc_ci95": [
+        0.7263766487497323,
+        0.7592195228687799
+      ]
+    },
+    "lasso_logistic": {
+      "roc_auc": 0.7420940672990197,
+      "pr_auc": 0.5008615639889011,
+      "brier": 0.14277775021080424,
+      "roc_auc_ci95": [
+        0.7253292155162133,
+        0.7569710836609018
+      ]
+    },
+    "gradient_boosting": {
+      "roc_auc": 0.7798207761207702,
+      "pr_auc": 0.555447914983194,
+      "brier": 0.13494936641625008,
+      "roc_auc_ci95": [
+        0.7641555293387492,
+        0.7943039203746227
+      ]
+    },
+    "_baseline_brier_predict_base_rate": 0.17225197395833333
+  },
+  "threshold_analysis": {
+    "cost_ratio_2_to_1": {
+      "threshold": 0.33,
+      "tp": 685,
+      "fp": 540,
+      "fn": 642,
+      "tn": 4133,
+      "recall": 0.5162019593067069,
+      "precision": 0.5591836734693878,
+      "cost_model": 1824.0,
+      "cost_approve_all": 2654.0,
+      "cost_decline_all": 4673.0
+    },
+    "cost_ratio_5_to_1": {
+      "threshold": 0.13999999999999999,
+      "tp": 1080,
+      "fp": 2113,
+      "fn": 247,
+      "tn": 2560,
+      "recall": 0.8138658628485306,
+      "precision": 0.33823989978077046,
+      "cost_model": 3348.0,
+      "cost_approve_all": 6635.0,
+      "cost_decline_all": 4673.0
+    }
+  }
+}
